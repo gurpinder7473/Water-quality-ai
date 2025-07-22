@@ -21,5 +21,5 @@ This app uses a machine learning model trained on real-world water quality param
 |----|----------|--------|-------------|---------|--------------|----------------|------------------|-----------|
 | 7.2 | 180 | 20791 | 7.3 | 356 | 563 | 10.2 | 67 | 3.9 |
 
-## 💖 Credits
-Made with love by [YourName] using CatBoost + Gradio + Hugging Face.
+##  Credits
+ using CatBoost + Gradio + Hugging Face.
