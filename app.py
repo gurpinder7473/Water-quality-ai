@@ -1,43 +1,43 @@
-
-import streamlit as st
+import gradio as gr
 import pandas as pd
-import joblib
-import urllib.request
+from catboost import CatBoostClassifier
 
-# Load model from GitHub
-MODEL_URL = "https://raw.githubusercontent.com/gurpinder7473/water-quality-ai/main/best_water_model.pkl"
-urllib.request.urlretrieve(MODEL_URL, "best_water_model.pkl")
-model = joblib.load("best_water_model.pkl")
+# Load CatBoost model
+model = CatBoostClassifier()
+model.load_model("catboost_model.cbm", format="cbm")
 
-st.title("💧 AquaMind: Water Quality Predictor")
-st.markdown("Upload water data or enter values manually to predict water safety.")
+# Prediction function
+def predict_quality(pH, Hardness, Solids, Chloramines, Sulfate, Conductivity,
+                    Organic_Carbon, Trihalomethanes, Turbidity):
+    try:
+        input_data = pd.DataFrame([[pH, Hardness, Solids, Chloramines, Sulfate,
+                                     Conductivity, Organic_Carbon, Trihalomethanes, Turbidity]],
+                                   columns=["ph", "Hardness", "Solids", "Chloramines", "Sulfate",
+                                            "Conductivity", "Organic_carbon", "Trihalomethanes", "Turbidity"])
+        prediction = model.predict(input_data)[0]
+        return "💧 Water is Safe to Drink" if prediction == 1 else "❌ Water is Not Safe to Drink"
+    except Exception as e:
+        return f"⚠️ Error: {str(e)}"
 
-uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+# Define Gradio UI
+inputs = [
+    gr.Number(label="pH"),
+    gr.Number(label="Hardness"),
+    gr.Number(label="Solids"),
+    gr.Number(label="Chloramines"),
+    gr.Number(label="Sulfate"),
+    gr.Number(label="Conductivity"),
+    gr.Number(label="Organic_Carbon"),  # Match column name in model
+    gr.Number(label="Trihalomethanes"),
+    gr.Number(label="Turbidity")
+]
 
-if uploaded_file:
-    data = pd.read_csv(uploaded_file)
-    st.write("Uploaded data:")
-    st.write(data.head())
+demo = gr.Interface(
+    fn=predict_quality,
+    inputs=inputs,
+    outputs="text",
+    title="💧 AquaMind: Water Quality Predictor",
+    description="Enter water chemistry values to check if water is safe to drink."
+)
 
-    if st.button("Predict"):
-        result = model.predict(data)
-        st.success("✅ Predictions done!")
-        st.write(result)
-else:
-    st.markdown("Or enter data manually:")
-
-    f1 = st.number_input("pH")
-    f2 = st.number_input("Hardness")
-    f3 = st.number_input("Solids")
-    f4 = st.number_input("Chloramines")
-    f5 = st.number_input("Sulfate")
-    f6 = st.number_input("Conductivity")
-    f7 = st.number_input("Organic Carbon")
-    f8 = st.number_input("Trihalomethanes")
-    f9 = st.number_input("Turbidity")
-
-    input_data = [f1, f2, f3, f4, f5, f6, f7, f8, f9]
-
-    if st.button("Predict Quality"):
-        pred = model.predict([input_data])
-        st.success("💧 Water is Safe" if pred[0] == 1 else "❌ Water is Not Safe")
+demo.launch()
